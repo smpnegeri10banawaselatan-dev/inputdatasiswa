@@ -136,8 +136,12 @@
 
   <div id="page-rekap" style="display:none">
     <h2>Rekap Nilai</h2>
-    <label>NIS: <input type="text" id="filterNIS"></label>
-    <label>Semester: <input type="text" id="filterSemester"></label>
+    <label>NIS:
+      <select id="filterNIS"></select>
+    </label>
+    <label>Semester:
+      <select id="filterSemester"></select>
+    </label>
     <button onclick="tampilkanRekap()">Tampilkan</button>
     <button onclick="window.print()">Cetak</button>
     <table id="tabelRekap" border="1">
@@ -145,6 +149,9 @@
         <tr><th>Mapel</th><th>Rata-rata</th></tr>
       </thead>
       <tbody></tbody>
+      <tfoot>
+        <tr><th>Rata-rata Semua</th><th id="totalRata">-</th></tr>
+      </tfoot>
     </table>
   </div>
 </div>
@@ -171,7 +178,6 @@ function showPage(page) {
 
 showPage('data');
 
-// Nilai Harian
 $('#formNilai').on('submit', function (e) {
   e.preventDefault();
   const data = Object.fromEntries(new FormData(this));
@@ -187,15 +193,19 @@ $('#formNilai').on('submit', function (e) {
 fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/NILAI!A2:E?key=${API_KEY}`)
   .then(res => res.json())
   .then(data => {
-    (data.values || []).forEach(row => {
-      const tr = $('<tr>');
-      row.forEach(cell => tr.append(`<td>${cell}</td>`));
-      $('#tabelNilai tbody').append(tr);
+    const rows = data.values || [];
+    const nisSet = new Set();
+    const semesterSet = new Set();
+    rows.forEach(row => {
+      $('#tabelNilai tbody').append(`<tr><td>${row.join('</td><td>')}</td></tr>`);
+      nisSet.add(row[0]);
+      semesterSet.add(row[4]);
     });
     $('#tabelNilai').DataTable();
+    nisSet.forEach(nis => $('#filterNIS').append(`<option value="${nis}">${nis}</option>`));
+    semesterSet.forEach(smt => $('#filterSemester').append(`<option value="${smt}">${smt}</option>`));
   });
 
-// Rekap Nilai
 function tampilkanRekap() {
   const nis = $('#filterNIS').val();
   const semester = $('#filterSemester').val();
@@ -212,16 +222,20 @@ function tampilkanRekap() {
         mapelNilai[mapel].push(nilai);
       });
       const tbody = $('#tabelRekap tbody').empty();
+      let total = 0, count = 0;
       for (const mapel in mapelNilai) {
         const avg = mapelNilai[mapel].reduce((a,b) => a+b, 0) / mapelNilai[mapel].length;
         tbody.append(`<tr><td>${mapel}</td><td>${avg.toFixed(2)}</td></tr>`);
+        total += avg;
+        count++;
       }
+      $('#totalRata').text(count ? (total / count).toFixed(2) : '-');
     });
 }
 
 function logout() {
   localStorage.removeItem("isAdmin");
-  location.href = "login.html";
+  window.location.href = "login.html";
 }
 </script>
 </body>
