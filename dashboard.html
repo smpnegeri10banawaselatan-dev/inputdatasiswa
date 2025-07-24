@@ -8,73 +8,106 @@
   <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
   <style>
     body {
+      margin: 0;
       font-family: Arial, sans-serif;
-      margin: 20px;
+      display: flex;
+      height: 100vh;
+    }
+    .sidebar {
+      width: 220px;
+      background-color: #1976d2;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+    }
+    .sidebar h2 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .sidebar button {
+      background: none;
+      border: none;
+      color: white;
+      padding: 10px;
+      margin: 5px 0;
+      text-align: left;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    .sidebar button:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+    .main-content {
+      flex-grow: 1;
+      padding: 20px;
+      overflow: auto;
     }
     table {
       width: 100% !important;
     }
-    input, select, button {
-      margin: 5px;
-      padding: 5px;
-    }
-    #formSiswa, #logoutBtn {
+    #formSiswa {
       margin-bottom: 20px;
     }
-    @media screen and (max-width: 600px) {
-      table, thead, tbody, th, td, tr {
-        display: block;
-      }
-      td {
-        border: none;
-        position: relative;
-        padding-left: 50%;
+    @media screen and (max-width: 768px) {
+      .sidebar {
+        display: none;
       }
     }
   </style>
 </head>
 <body>
+<div class="sidebar">
+  <h2>Menu</h2>
+  <button onclick="showPage('data')">📋 Data Siswa</button>
+  <button onclick="showPage('tambah')">➕ Tambah Siswa</button>
+  <button onclick="logout()">🚪 Logout</button>
+</div>
 
-<h2>Dashboard Siswa</h2>
+<div class="main-content">
+  <div id="page-tambah" style="display:none">
+    <h2>Tambah Siswa</h2>
+    <form id="formSiswa">
+      <input type="text" name="nis" placeholder="NIS" required>
+      <input type="text" name="nama" placeholder="Nama" required>
+      <input type="text" name="kelas" placeholder="Kelas" required>
+      <select name="jk" required>
+        <option value="">Pilih Jenis Kelamin</option>
+        <option value="Laki-laki">Laki-laki</option>
+        <option value="Perempuan">Perempuan</option>
+      </select>
+      <input type="text" name="alamat" placeholder="Alamat">
+      <button type="submit">Tambah</button>
+    </form>
+  </div>
 
-<button id="logoutBtn" onclick="logout()">Logout</button>
-
-<form id="formSiswa">
-  <input type="text" name="nis" placeholder="NIS" required>
-  <input type="text" name="nama" placeholder="Nama" required>
-  <input type="text" name="kelas" placeholder="Kelas" required>
-  <select name="jk" required>
-    <option value="">Pilih Jenis Kelamin</option>
-    <option value="Laki-laki">Laki-laki</option>
-    <option value="Perempuan">Perempuan</option>
-  </select>
-  <input type="text" name="alamat" placeholder="Alamat">
-  <button type="submit">Tambah</button>
-</form>
-
-<table id="siswaTable" class="display nowrap">
-  <thead>
-    <tr>
-      <th>NIS</th>
-      <th>Nama</th>
-      <th>Kelas</th>
-      <th>JK</th>
-      <th>Alamat</th>
-      <th>Aksi</th>
-    </tr>
-  </thead>
-  <tfoot>
-    <tr>
-      <th><input type="text" placeholder="Cari NIS"></th>
-      <th><input type="text" placeholder="Cari Nama"></th>
-      <th><input type="text" placeholder="Cari Kelas"></th>
-      <th><input type="text" placeholder="Cari JK"></th>
-      <th><input type="text" placeholder="Cari Alamat"></th>
-      <th></th>
-    </tr>
-  </tfoot>
-  <tbody></tbody>
-</table>
+  <div id="page-data">
+    <h2>Data Siswa</h2>
+    <table id="siswaTable" class="display nowrap">
+      <thead>
+        <tr>
+          <th>NIS</th>
+          <th>Nama</th>
+          <th>Kelas</th>
+          <th>JK</th>
+          <th>Alamat</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tfoot>
+        <tr>
+          <th><input type="text" placeholder="Cari NIS"></th>
+          <th><input type="text" placeholder="Cari Nama"></th>
+          <th><input type="text" placeholder="Cari Kelas"></th>
+          <th><input type="text" placeholder="Cari JK"></th>
+          <th><input type="text" placeholder="Cari Alamat"></th>
+          <th></th>
+        </tr>
+      </tfoot>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
 
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
@@ -90,6 +123,13 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw0U-J_r4U8L9ZEkCUjX
 if (localStorage.getItem("isAdmin") !== "true") {
   window.location.href = "login.html";
 }
+
+function showPage(page) {
+  $(".main-content > div").hide();
+  $(`#page-${page}`).show();
+}
+
+showPage('data');
 
 $(document).ready(function () {
   const range = `Sheet1!A2:E`;
