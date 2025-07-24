@@ -46,7 +46,7 @@
     table {
       width: 100% !important;
     }
-    #formSiswa {
+    #formSiswa, #formNilai {
       margin-bottom: 20px;
     }
     @media screen and (max-width: 768px) {
@@ -61,6 +61,8 @@
   <h2>Menu</h2>
   <button onclick="showPage('data')">📋 Data Siswa</button>
   <button onclick="showPage('tambah')">➕ Tambah Siswa</button>
+  <button onclick="showPage('nilai')">📝 Nilai Harian</button>
+  <button onclick="showPage('rekap')">📈 Rekap Nilai</button>
   <button onclick="logout()">🚪 Logout</button>
 </div>
 
@@ -107,6 +109,44 @@
       <tbody></tbody>
     </table>
   </div>
+
+  <div id="page-nilai" style="display:none">
+    <h2>Nilai Harian Siswa</h2>
+    <form id="formNilai">
+      <input type="text" name="nis" placeholder="NIS" required>
+      <input type="text" name="mapel" placeholder="Mata Pelajaran" required>
+      <input type="number" name="nilai" placeholder="Nilai" required>
+      <input type="date" name="tanggal" required>
+      <input type="text" name="semester" placeholder="Semester" required>
+      <button type="submit">Simpan Nilai</button>
+    </form>
+    <table id="tabelNilai" class="display nowrap">
+      <thead>
+        <tr>
+          <th>NIS</th>
+          <th>Mapel</th>
+          <th>Nilai</th>
+          <th>Tanggal</th>
+          <th>Semester</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div id="page-rekap" style="display:none">
+    <h2>Rekap Nilai</h2>
+    <label>NIS: <input type="text" id="filterNIS"></label>
+    <label>Semester: <input type="text" id="filterSemester"></label>
+    <button onclick="tampilkanRekap()">Tampilkan</button>
+    <button onclick="window.print()">Cetak</button>
+    <table id="tabelRekap" border="1">
+      <thead>
+        <tr><th>Mapel</th><th>Rata-rata</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 </div>
 
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
@@ -131,95 +171,58 @@ function showPage(page) {
 
 showPage('data');
 
-$(document).ready(function () {
-  const range = `Sheet1!A2:E`;
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?key=${API_KEY}`;
+// Nilai Harian
+$('#formNilai').on('submit', function (e) {
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(this));
+  data.action = "add_nilai";
+  fetch(SCRIPT_URL, {
+    method: "POST",
+    body: JSON.stringify(data)
+  })
+    .then(res => res.text())
+    .then(() => location.reload());
+});
 
-  fetch(url)
+fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/NILAI!A2:E?key=${API_KEY}`)
+  .then(res => res.json())
+  .then(data => {
+    (data.values || []).forEach(row => {
+      const tr = $('<tr>');
+      row.forEach(cell => tr.append(`<td>${cell}</td>`));
+      $('#tabelNilai tbody').append(tr);
+    });
+    $('#tabelNilai').DataTable();
+  });
+
+// Rekap Nilai
+function tampilkanRekap() {
+  const nis = $('#filterNIS').val();
+  const semester = $('#filterSemester').val();
+  fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/NILAI!A2:E?key=${API_KEY}`)
     .then(res => res.json())
     .then(data => {
       const rows = data.values || [];
-      rows.forEach(row => {
-        const tr = $("<tr>");
-        row.forEach(cell => tr.append(`<td>${cell}</td>`));
-        tr.append(`<td><button onclick="editRow('${row[0]}')">Edit</button><button onclick="deleteRow('${row[0]}')">Hapus</button></td>`);
-        $("#siswaTable tbody").append(tr);
+      const filtered = rows.filter(r => r[0] === nis && r[4] === semester);
+      const mapelNilai = {};
+      filtered.forEach(r => {
+        const mapel = r[1];
+        const nilai = parseFloat(r[2]);
+        if (!mapelNilai[mapel]) mapelNilai[mapel] = [];
+        mapelNilai[mapel].push(nilai);
       });
-
-      const table = $('#siswaTable').DataTable({
-        dom: 'Bfrtip',
-        buttons: ['excelHtml5', 'print'],
-        initComplete: function () {
-          this.api().columns().every(function () {
-            var column = this;
-            $('input', this.footer()).on('keyup change', function () {
-              column.search(this.value).draw();
-            });
-          });
-        }
-      });
+      const tbody = $('#tabelRekap tbody').empty();
+      for (const mapel in mapelNilai) {
+        const avg = mapelNilai[mapel].reduce((a,b) => a+b, 0) / mapelNilai[mapel].length;
+        tbody.append(`<tr><td>${mapel}</td><td>${avg.toFixed(2)}</td></tr>`);
+      }
     });
-
-  $('#formSiswa').on('submit', function (e) {
-    e.preventDefault();
-    const data = Object.fromEntries(new FormData(this));
-
-    fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Sheet1!A2:A?key=${API_KEY}`)
-      .then(res => res.json())
-      .then(existing => {
-        const nisList = existing.values ? existing.values.flat() : [];
-        if (nisList.includes(data.nis)) {
-          alert("NIS sudah ada!");
-          return;
-        }
-
-        data.action = "add";
-        fetch(SCRIPT_URL, {
-          method: "POST",
-          body: JSON.stringify(data)
-        })
-          .then(res => res.text())
-          .then(() => location.reload());
-      });
-  });
-});
+}
 
 function logout() {
   localStorage.removeItem("isAdmin");
   location.href = "login.html";
 }
-
-function editRow(nis) {
-  const row = $(`#siswaTable td:contains('${nis}')`).closest('tr');
-  const values = row.children('td').map(function(){ return $(this).text(); }).get();
-  const nama = prompt("Edit Nama", values[1]);
-  const kelas = prompt("Edit Kelas", values[2]);
-  const jk = prompt("Edit JK", values[3]);
-  const alamat = prompt("Edit Alamat", values[4]);
-
-  if (nama && kelas && jk) {
-    const data = { action: "update", nis, nama, kelas, jk, alamat };
-    fetch(SCRIPT_URL, {
-      method: "POST",
-      body: JSON.stringify(data)
-    })
-    .then(res => res.text())
-    .then(() => location.reload());
-  }
-}
-
-function deleteRow(nis) {
-  if (confirm("Yakin hapus data ini?")) {
-    const data = { action: "delete", nis };
-    fetch(SCRIPT_URL, {
-      method: "POST",
-      body: JSON.stringify(data)
-    })
-    .then(res => res.text())
-    .then(() => location.reload());
-  }
-}
 </script>
-
 </body>
 </html>
