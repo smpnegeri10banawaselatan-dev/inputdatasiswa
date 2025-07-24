@@ -1,242 +1,85 @@
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Dashboard - Database Siswa</title>
+  <title>Dashboard Admin</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
-  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
   <style>
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', sans-serif;
       display: flex;
-      height: 100vh;
     }
     .sidebar {
-      width: 220px;
-      background-color: #1976d2;
+      width: 250px;
+      background: #0d47a1;
       color: white;
-      display: flex;
-      flex-direction: column;
+      height: 100vh;
       padding: 20px;
+      box-sizing: border-box;
     }
     .sidebar h2 {
-      text-align: center;
-      margin-bottom: 30px;
+      margin-top: 0;
+      font-size: 24px;
     }
-    .sidebar button {
-      background: none;
-      border: none;
+    .sidebar ul {
+      list-style: none;
+      padding: 0;
+    }
+    .sidebar ul li {
+      margin: 20px 0;
+    }
+    .sidebar ul li a {
       color: white;
-      padding: 10px;
-      margin: 5px 0;
-      text-align: left;
+      text-decoration: none;
+    }
+    .content {
+      flex: 1;
+      padding: 30px;
+      background: #f5f5f5;
+    }
+    .logout-btn {
+      margin-top: 30px;
+      display: inline-block;
+      padding: 10px 20px;
+      background: #e53935;
+      color: white;
+      border: none;
       cursor: pointer;
-      font-size: 16px;
+      border-radius: 6px;
     }
-    .sidebar button:hover {
-      background-color: rgba(255, 255, 255, 0.2);
-    }
-    .main-content {
-      flex-grow: 1;
-      padding: 20px;
-      overflow: auto;
-    }
-    table {
-      width: 100% !important;
-    }
-    #formSiswa, #formNilai {
-      margin-bottom: 20px;
-    }
-    @media screen and (max-width: 768px) {
-      .sidebar {
-        display: none;
-      }
+    .logout-btn:hover {
+      background: #c62828;
     }
   </style>
 </head>
 <body>
-<div class="sidebar">
-  <h2>Menu</h2>
-  <button onclick="showPage('data')">📋 Data Siswa</button>
-  <button onclick="showPage('tambah')">➕ Tambah Siswa</button>
-  <button onclick="showPage('nilai')">📝 Nilai Harian</button>
-  <button onclick="showPage('rekap')">📈 Rekap Nilai</button>
-  <button onclick="logout()">🚪 Logout</button>
-</div>
-
-<div class="main-content">
-  <div id="page-tambah" style="display:none">
-    <h2>Tambah Siswa</h2>
-    <form id="formSiswa">
-      <input type="text" name="nis" placeholder="NIS" required>
-      <input type="text" name="nama" placeholder="Nama" required>
-      <input type="text" name="kelas" placeholder="Kelas" required>
-      <select name="jk" required>
-        <option value="">Pilih Jenis Kelamin</option>
-        <option value="Laki-laki">Laki-laki</option>
-        <option value="Perempuan">Perempuan</option>
-      </select>
-      <input type="text" name="alamat" placeholder="Alamat">
-      <button type="submit">Tambah</button>
-    </form>
+  <div class="sidebar">
+    <h2>Menu</h2>
+    <ul>
+      <li><a href="#">Dashboard</a></li>
+      <li><a href="#">Data Siswa</a></li>
+      <li><a href="#">Nilai Harian</a></li>
+      <li><a href="#">Rekap Nilai</a></li>
+    </ul>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
+  <div class="content">
+    <h1>Selamat datang, Admin!</h1>
+    <p>Ini adalah dashboard utama aplikasi database siswa.</p>
   </div>
 
-  <div id="page-data">
-    <h2>Data Siswa</h2>
-    <table id="siswaTable" class="display nowrap">
-      <thead>
-        <tr>
-          <th>NIS</th>
-          <th>Nama</th>
-          <th>Kelas</th>
-          <th>JK</th>
-          <th>Alamat</th>
-          <th>Aksi</th>
-        </tr>
-      </thead>
-      <tfoot>
-        <tr>
-          <th><input type="text" placeholder="Cari NIS"></th>
-          <th><input type="text" placeholder="Cari Nama"></th>
-          <th><input type="text" placeholder="Cari Kelas"></th>
-          <th><input type="text" placeholder="Cari JK"></th>
-          <th><input type="text" placeholder="Cari Alamat"></th>
-          <th></th>
-        </tr>
-      </tfoot>
-      <tbody></tbody>
-    </table>
-  </div>
+  <script>
+    // Cek autentikasi
+    if (localStorage.getItem('isAdmin') !== 'true') {
+      window.location.href = 'login.html';
+    }
 
-  <div id="page-nilai" style="display:none">
-    <h2>Nilai Harian Siswa</h2>
-    <form id="formNilai">
-      <input type="text" name="nis" placeholder="NIS" required>
-      <input type="text" name="mapel" placeholder="Mata Pelajaran" required>
-      <input type="number" name="nilai" placeholder="Nilai" required>
-      <input type="date" name="tanggal" required>
-      <input type="text" name="semester" placeholder="Semester" required>
-      <button type="submit">Simpan Nilai</button>
-    </form>
-    <table id="tabelNilai" class="display nowrap">
-      <thead>
-        <tr>
-          <th>NIS</th>
-          <th>Mapel</th>
-          <th>Nilai</th>
-          <th>Tanggal</th>
-          <th>Semester</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
-
-  <div id="page-rekap" style="display:none">
-    <h2>Rekap Nilai</h2>
-    <label>NIS:
-      <select id="filterNIS"></select>
-    </label>
-    <label>Semester:
-      <select id="filterSemester"></select>
-    </label>
-    <button onclick="tampilkanRekap()">Tampilkan</button>
-    <button onclick="window.print()">Cetak</button>
-    <table id="tabelRekap" border="1">
-      <thead>
-        <tr><th>Mapel</th><th>Rata-rata</th></tr>
-      </thead>
-      <tbody></tbody>
-      <tfoot>
-        <tr><th>Rata-rata Semua</th><th id="totalRata">-</th></tr>
-      </tfoot>
-    </table>
-  </div>
-</div>
-
-<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script>
-const API_KEY = "AIzaSyDqrFS0ew8YpRbDKCUAWU3-i7WZ4M1tN5Q";
-const SHEET_ID = "1nAi5myvlMVVz1907FXB870iOyfZJGj38Prt49PU_xoU";
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw0U-J_r4U8L9ZEkCUjXZFpQDPHghqJvZCnLEh5Lu2-zSBy3Yn8pB0hYXZU19LG45iB/exec";
-
-if (localStorage.getItem("isAdmin") !== "true") {
-  window.location.href = "index.html";
-}
-
-function showPage(page) {
-  $(".main-content > div").hide();
-  $(`#page-${page}`).show();
-}
-
-showPage('data');
-
-$('#formNilai').on('submit', function (e) {
-  e.preventDefault();
-  const data = Object.fromEntries(new FormData(this));
-  data.action = "add_nilai";
-  fetch(SCRIPT_URL, {
-    method: "POST",
-    body: JSON.stringify(data)
-  })
-    .then(res => res.text())
-    .then(() => location.reload());
-});
-
-fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/NILAI!A2:E?key=${API_KEY}`)
-  .then(res => res.json())
-  .then(data => {
-    const rows = data.values || [];
-    const nisSet = new Set();
-    const semesterSet = new Set();
-    rows.forEach(row => {
-      $('#tabelNilai tbody').append(`<tr><td>${row.join('</td><td>')}</td></tr>`);
-      nisSet.add(row[0]);
-      semesterSet.add(row[4]);
-    });
-    $('#tabelNilai').DataTable();
-    nisSet.forEach(nis => $('#filterNIS').append(`<option value="${nis}">${nis}</option>`));
-    semesterSet.forEach(smt => $('#filterSemester').append(`<option value="${smt}">${smt}</option>`));
-  });
-
-function tampilkanRekap() {
-  const nis = $('#filterNIS').val();
-  const semester = $('#filterSemester').val();
-  fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/NILAI!A2:E?key=${API_KEY}`)
-    .then(res => res.json())
-    .then(data => {
-      const rows = data.values || [];
-      const filtered = rows.filter(r => r[0] === nis && r[4] === semester);
-      const mapelNilai = {};
-      filtered.forEach(r => {
-        const mapel = r[1];
-        const nilai = parseFloat(r[2]);
-        if (!mapelNilai[mapel]) mapelNilai[mapel] = [];
-        mapelNilai[mapel].push(nilai);
-      });
-      const tbody = $('#tabelRekap tbody').empty();
-      let total = 0, count = 0;
-      for (const mapel in mapelNilai) {
-        const avg = mapelNilai[mapel].reduce((a,b) => a+b, 0) / mapelNilai[mapel].length;
-        tbody.append(`<tr><td>${mapel}</td><td>${avg.toFixed(2)}</td></tr>`);
-        total += avg;
-        count++;
-      }
-      $('#totalRata').text(count ? (total / count).toFixed(2) : '-');
-    });
-}
-
-function logout() {
-  localStorage.removeItem("isAdmin");
-  window.location.href = "index.html";
-}
-</script>
+    function logout() {
+      localStorage.removeItem('isAdmin');
+      window.location.href = 'login.html';
+    }
+  </script>
 </body>
 </html>
