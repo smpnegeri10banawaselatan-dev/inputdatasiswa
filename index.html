@@ -3,75 +3,34 @@
 <head>
   <meta charset="UTF-8">
   <title>Database Siswa</title>
-  <!-- DataTables CSS -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
   <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
       font-family: Arial, sans-serif;
-      padding: 20px;
-      margin: 0;
+      margin: 20px;
     }
-
-    h2 {
-      text-align: center;
+    table {
+      width: 100% !important;
     }
-
-    form, #loginForm {
-      margin-bottom: 20px;
-      max-width: 500px;
-      margin: auto;
+    input, select, button {
+      margin: 5px;
+      padding: 5px;
     }
-
-    form input, form select, #loginForm input {
-      display: block;
-      width: 100%;
-      padding: 8px;
-      margin: 6px 0;
-      box-sizing: border-box;
-    }
-
-    #filterKelas, #filterJK {
-      margin: 10px 5px;
-      padding: 6px;
-    }
-
-    #logoutBtn {
+    #formSiswa, #logoutBtn {
       display: none;
-      margin: 10px auto 30px;
-      padding: 10px 20px;
-      display: block;
+      margin-bottom: 20px;
     }
-
-    @media (max-width: 600px) {
+    @media screen and (max-width: 600px) {
       table, thead, tbody, th, td, tr {
         display: block;
-      }
-      thead tr {
-        position: absolute;
-        top: -9999px;
-        left: -9999px;
       }
       td {
         border: none;
         position: relative;
         padding-left: 50%;
-        text-align: left;
       }
-      td::before {
-        position: absolute;
-        top: 6px;
-        left: 6px;
-        width: 45%;
-        white-space: nowrap;
-        font-weight: bold;
-      }
-      td:nth-of-type(1)::before { content: "NIS"; }
-      td:nth-of-type(2)::before { content: "Nama"; }
-      td:nth-of-type(3)::before { content: "Kelas"; }
-      td:nth-of-type(4)::before { content: "Jenis Kelamin"; }
-      td:nth-of-type(5)::before { content: "Alamat"; }
     }
   </style>
 </head>
@@ -79,20 +38,15 @@
 
 <h2>Database Siswa</h2>
 
-<!-- Login -->
 <div id="loginForm">
-  <h3>Login Admin</h3>
-  <input type="text" id="username" placeholder="Username">
-  <input type="password" id="password" placeholder="Password">
+  <input type="text" id="username" placeholder="Username"><br>
+  <input type="password" id="password" placeholder="Password"><br>
   <button onclick="login()">Login</button>
 </div>
 
-<!-- Logout -->
 <button id="logoutBtn" onclick="logout()">Logout</button>
 
-<!-- Form Input -->
 <form id="formSiswa">
-  <h3>Tambah Data Siswa</h3>
   <input type="text" name="nis" placeholder="NIS" required>
   <input type="text" name="nama" placeholder="Nama" required>
   <input type="text" name="kelas" placeholder="Kelas" required>
@@ -105,128 +59,145 @@
   <button type="submit">Tambah</button>
 </form>
 
-<!-- Filter -->
-<div style="text-align:center; margin: 10px 0;">
-  <label for="filterKelas">Kelas:</label>
-  <select id="filterKelas"><option value="">Semua</option></select>
-
-  <label for="filterJK">Jenis Kelamin:</label>
-  <select id="filterJK"><option value="">Semua</option></select>
-</div>
-
-<!-- Tabel -->
 <table id="siswaTable" class="display nowrap">
   <thead>
     <tr>
       <th>NIS</th>
       <th>Nama</th>
       <th>Kelas</th>
-      <th>Jenis Kelamin</th>
+      <th>JK</th>
       <th>Alamat</th>
+      <th>Aksi</th>
     </tr>
   </thead>
+  <tfoot>
+    <tr>
+      <th><input type="text" placeholder="Cari NIS"></th>
+      <th><input type="text" placeholder="Cari Nama"></th>
+      <th><input type="text" placeholder="Cari Kelas"></th>
+      <th><input type="text" placeholder="Cari JK"></th>
+      <th><input type="text" placeholder="Cari Alamat"></th>
+      <th></th>
+    </tr>
+  </tfoot>
   <tbody></tbody>
 </table>
 
-<!-- Scripts -->
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
-
 <script>
-  const SHEET_ID = "1nAi5myvlMVVz1907FXB870iOyfZJGj38Prt49PU_xoU";
-  const API_KEY = "AIzaSyDqrFS0ew8YpRbDKCUAWU3-i7WZ4M1tN5Q";
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzsGaBJvkOvKWTUboa84mn_RvWiGqhuQAABd9HLIY30CzB50wUpFL6m_O9c9KZ2VG7E/exec";
-  const RANGE = "Sheet1!A2:E";
+const API_KEY = "AIzaSyDqrFS0ew8YpRbDKCUAWU3-i7WZ4M1tN5Q";
+const SHEET_ID = "1nAi5myvlMVVz1907FXB870iOyfZJGj38Prt49PU_xoU";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw0U-J_r4U8L9ZEkCUjXZFpQDPHghqJvZCnLEh5Lu2-zSBy3Yn8pB0hYXZU19LG45iB/exec";
 
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}?key=${API_KEY}`;
+$(document).ready(function () {
+  const range = `Sheet1!A2:E`;
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?key=${API_KEY}`;
 
   fetch(url)
     .then(res => res.json())
     .then(data => {
       const rows = data.values || [];
-      const kelasSet = new Set();
-      const jkSet = new Set();
-
       rows.forEach(row => {
         const tr = $("<tr>");
         row.forEach(cell => tr.append(`<td>${cell}</td>`));
+        tr.append(`<td><button onclick="editRow('${row[0]}')">Edit</button><button onclick="deleteRow('${row[0]}')">Hapus</button></td>`);
         $("#siswaTable tbody").append(tr);
-
-        kelasSet.add(row[2]);
-        jkSet.add(row[3]);
       });
 
-      kelasSet.forEach(k => $("#filterKelas").append(`<option value="${k}">${k}</option>`));
-      jkSet.forEach(j => $("#filterJK").append(`<option value="${j}">${j}</option>`));
-
-      const table = $("#siswaTable").DataTable({
+      const table = $('#siswaTable').DataTable({
         dom: 'Bfrtip',
-        responsive: true,
-        buttons: ['excelHtml5', 'pdfHtml5', 'print'],
-        pageLength: 5
-      });
-
-      $("#filterKelas").on("change", function () {
-        table.column(2).search(this.value).draw();
-      });
-      $("#filterJK").on("change", function () {
-        table.column(3).search(this.value).draw();
+        buttons: ['excelHtml5', 'print'],
+        initComplete: function () {
+          this.api().columns().every(function () {
+            var column = this;
+            $('input', this.footer()).on('keyup change', function () {
+              column.search(this.value).draw();
+            });
+          });
+        }
       });
     });
 
-  function login() {
-    const user = document.getElementById("username").value;
-    const pass = document.getElementById("password").value;
-
-    if (user === "fajar" && pass === "laudjeng") {
-      localStorage.setItem("isAdmin", "true");
-      location.reload();
-    } else {
-      alert("Login salah!");
-    }
-  }
-
-  function logout() {
-    localStorage.removeItem("isAdmin");
-    location.reload();
-  }
-
   if (localStorage.getItem("isAdmin") === "true") {
-    document.getElementById("loginForm").style.display = "none";
-    document.getElementById("formSiswa").style.display = "block";
-    document.getElementById("logoutBtn").style.display = "inline-block";
+    $("#loginForm").hide();
+    $("#formSiswa, #logoutBtn").show();
   }
 
-  document.getElementById("formSiswa").addEventListener("submit", function (e) {
+  $('#formSiswa').on('submit', function (e) {
     e.preventDefault();
-    const data = {
-      nis: this.nis.value,
-      nama: this.nama.value,
-      kelas: this.kelas.value,
-      jk: this.jk.value,
-      alamat: this.alamat.value
-    };
+    const data = Object.fromEntries(new FormData(this));
 
+    fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Sheet1!A2:A?key=${API_KEY}`)
+      .then(res => res.json())
+      .then(existing => {
+        const nisList = existing.values ? existing.values.flat() : [];
+        if (nisList.includes(data.nis)) {
+          alert("NIS sudah ada!");
+          return;
+        }
+
+        data.action = "add";
+        fetch(SCRIPT_URL, {
+          method: "POST",
+          body: JSON.stringify(data)
+        })
+          .then(res => res.text())
+          .then(() => location.reload());
+      });
+  });
+});
+
+function login() {
+  const user = $('#username').val();
+  const pass = $('#password').val();
+  if (user === 'admin' && pass === '12345') {
+    localStorage.setItem("isAdmin", "true");
+    location.reload();
+  } else {
+    alert("Login gagal!");
+  }
+}
+
+function logout() {
+  localStorage.removeItem("isAdmin");
+  location.reload();
+}
+
+function editRow(nis) {
+  const row = $(`#siswaTable td:contains('${nis}')`).closest('tr');
+  const values = row.children('td').map(function(){ return $(this).text(); }).get();
+  const nama = prompt("Edit Nama", values[1]);
+  const kelas = prompt("Edit Kelas", values[2]);
+  const jk = prompt("Edit JK", values[3]);
+  const alamat = prompt("Edit Alamat", values[4]);
+
+  if (nama && kelas && jk) {
+    const data = { action: "update", nis, nama, kelas, jk, alamat };
     fetch(SCRIPT_URL, {
       method: "POST",
       body: JSON.stringify(data)
     })
-      .then(res => res.text())
-      .then(() => {
-        alert("Data berhasil ditambahkan!");
-        location.reload();
-      })
-      .catch(err => {
-        alert("Gagal kirim data.");
-        console.error(err);
-      });
-  });
+    .then(res => res.text())
+    .then(() => location.reload());
+  }
+}
+
+function deleteRow(nis) {
+  if (confirm("Yakin hapus data ini?")) {
+    const data = { action: "delete", nis };
+    fetch(SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify(data)
+    })
+    .then(res => res.text())
+    .then(() => location.reload());
+  }
+}
 </script>
 
 </body>
