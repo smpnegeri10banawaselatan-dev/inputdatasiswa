@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Logout - Database Siswa</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      background-color: #f1f5f9;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .box {
+      background: white;
+      padding: 30px 40px;
+      border-radius: 8px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .box h2 {
+      color: #0d47a1;
+      margin-bottom: 10px;
+    }
+    .box p {
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>Berhasil Logout</h2>
+    <p>Anda akan diarahkan kembali ke halaman login...</p>
+  </div>
+
+  <script>
+    // Hapus status admin dari localStorage
+    localStorage.removeItem('isAdmin');
+
+    // Redirect ke login.html setelah 2,5 detik
+    setTimeout(() => {
+      window.location.href = 'index.html';
+    }, 2500);
+  </script>
+</body>
+</html>
