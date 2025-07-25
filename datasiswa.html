@@ -1,102 +1,151 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Database Siswa</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8">
+  <title>Data Siswa</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f0f4f8; }
+    h2 { color: #0d47a1; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #e3f2fd; }
+    .aksi-btn { margin-right: 8px; cursor: pointer; color: #1565c0; }
+    input, select, button { padding: 6px; margin: 4px 0; }
+    .form-group { margin-bottom: 10px; }
+    .hidden { display: none; }
+  </style>
 </head>
-<body class="bg-gray-100 p-4">
-
-  <div class="max-w-5xl mx-auto">
-    <h1 class="text-2xl font-bold text-center text-blue-700 mb-6">Database Siswa</h1>
-
-    <!-- Form Input -->
-    <div class="bg-white p-4 rounded-lg shadow mb-6">
-      <h2 class="text-lg font-semibold mb-4">Tambah Siswa Baru</h2>
-      <form id="formSiswa" class="grid md:grid-cols-2 gap-4">
-        <input class="border p-2 rounded" type="text" name="nama" placeholder="Nama Siswa" required />
-        <input class="border p-2 rounded" type="text" name="kelas" placeholder="Kelas" required />
-        <select name="jk" class="border p-2 rounded" required>
-          <option value="">Pilih Jenis Kelamin</option>
-          <option value="Laki-laki">Laki-laki</option>
-          <option value="Perempuan">Perempuan</option>
-        </select>
-        <input class="border p-2 rounded" type="text" name="nisn" placeholder="NISN" />
-        <input class="border p-2 rounded col-span-2" type="text" name="alamat" placeholder="Alamat" />
-        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded col-span-2">Simpan</button>
-      </form>
-      <p id="status" class="text-green-600 mt-2"></p>
-    </div>
-
-    <!-- Tabel Data -->
-    <div class="bg-white p-4 rounded-lg shadow overflow-auto">
-      <h2 class="text-lg font-semibold mb-4">Daftar Siswa</h2>
-      <table id="tabelSiswa" class="min-w-full text-sm text-left">
-        <thead class="bg-blue-700 text-white">
-          <tr></tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+<body>
+  <h2>📋 Data Siswa</h2>
+  <div id="formInput">
+    <div class="form-group">
+      <input type="text" id="nama" placeholder="Nama">
+      <input type="text" id="kelas" placeholder="Kelas">
+      <select id="jk">
+        <option value="">Jenis Kelamin</option>
+        <option value="L">Laki-laki</option>
+        <option value="P">Perempuan</option>
+      </select>
+      <input type="text" id="nisn" placeholder="NISN">
+      <input type="text" id="alamat" placeholder="Alamat">
+      <button onclick="submitForm()">Simpan</button>
     </div>
   </div>
+  
+  <div>
+    <input type="text" id="search" placeholder="Cari nama..." onkeyup="renderTable()">
+    <button onclick="exportExcel()">Export Excel</button>
+    <button onclick="window.print()">Cetak</button>
+  </div>
+
+  <table id="tabel">
+    <thead>
+      <tr>
+        <th>Nama</th><th>Kelas</th><th>JK</th><th>NISN</th><th>Alamat</th><th>Aksi</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
 <script>
-const sheetID = '1nAi5myvlMVVz1907FXB870iOyfZJGj38Prt49PU_xoU';
-const sheetName = 'NamaSiswa';
-const url = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?sheet=${sheetName}`;
-const scriptURL = 'PASTE_APPS_SCRIPT_URL_HERE'; // Ganti dengan URL Web Apps kamu
+const sheetURL = 'https://script.google.com/macros/s/YOUR_DEPLOYED_WEBAPP_URL/exec';
+let dataSiswa = [];
+let editId = null;
 
-// Load data dari Spreadsheet
-fetch(url)
-  .then(res => res.text())
-  .then(rep => {
-    const data = JSON.parse(rep.substr(47).slice(0, -2));
-    const theadRow = document.querySelector('#tabelSiswa thead tr');
-    const tbody = document.querySelector('#tabelSiswa tbody');
+if (!localStorage.getItem("isAdmin")) {
+  alert("Harap login sebagai admin terlebih dahulu");
+  location.href = "login.html";
+}
 
-    // Buat header
-    data.table.cols.forEach(col => {
-      const th = document.createElement('th');
-      th.className = "p-2 border";
-      th.textContent = col.label;
-      theadRow.appendChild(th);
+function fetchData() {
+  fetch(sheetURL)
+    .then(res => res.json())
+    .then(data => {
+      dataSiswa = data;
+      renderTable();
     });
+}
 
-    // Buat isi
-    data.table.rows.forEach(row => {
-      const tr = document.createElement('tr');
-      row.c.forEach(cell => {
-        const td = document.createElement('td');
-        td.className = "p-2 border";
-        td.textContent = cell ? cell.v : '';
-        tr.appendChild(td);
-      });
-      tbody.appendChild(tr);
-    });
+function renderTable() {
+  const tbody = document.querySelector("#tabel tbody");
+  const keyword = document.getElementById("search").value.toLowerCase();
+  tbody.innerHTML = "";
+  dataSiswa.filter(s => s.nama.toLowerCase().includes(keyword)).forEach(s => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${s.nama}</td>
+      <td>${s.kelas}</td>
+      <td>${s.jk}</td>
+      <td>${s.nisn}</td>
+      <td>${s.alamat}</td>
+      <td>
+        <span class="aksi-btn" onclick="editData('${s.id}')">Edit</span>
+        <span class="aksi-btn" onclick="hapusData('${s.id}')">Hapus</span>
+      </td>`;
+    tbody.appendChild(tr);
   });
+}
 
-// Submit Form
-document.getElementById('formSiswa').addEventListener('submit', function(e) {
-  e.preventDefault();
-  const formData = new FormData(this);
-  const data = Object.fromEntries(formData.entries());
+function submitForm() {
+  const nama = document.getElementById("nama").value;
+  const kelas = document.getElementById("kelas").value;
+  const jk = document.getElementById("jk").value;
+  const nisn = document.getElementById("nisn").value;
+  const alamat = document.getElementById("alamat").value;
 
-  fetch(scriptURL, {
-    method: 'POST',
+  if (!nama || !kelas || !jk) return alert("Harap isi semua kolom wajib.");
+
+  const data = { nama, kelas, jk, nisn, alamat };
+  let url = sheetURL;
+  let method = "POST";
+
+  if (editId) {
+    data.id = editId;
+    method = "PUT";
+    editId = null;
+  }
+
+  fetch(url, {
+    method: method,
     body: JSON.stringify(data),
     headers: { 'Content-Type': 'application/json' }
   })
-  .then(res => res.text())
-  .then(msg => {
-    document.getElementById('status').textContent = "Data berhasil ditambahkan!";
-    this.reset();
-  })
-  .catch(err => {
-    document.getElementById('status').textContent = "Gagal menambahkan data.";
-    console.error(err);
+  .then(() => {
+    fetchData();
+    document.querySelectorAll("#formInput input, #formInput select").forEach(el => el.value = "");
   });
-});
+}
+
+function editData(id) {
+  const s = dataSiswa.find(d => d.id === id);
+  document.getElementById("nama").value = s.nama;
+  document.getElementById("kelas").value = s.kelas;
+  document.getElementById("jk").value = s.jk;
+  document.getElementById("nisn").value = s.nisn;
+  document.getElementById("alamat").value = s.alamat;
+  editId = id;
+}
+
+function hapusData(id) {
+  if (!confirm("Yakin ingin menghapus data ini?")) return;
+  fetch(sheetURL, {
+    method: "DELETE",
+    body: JSON.stringify({ id }),
+    headers: { 'Content-Type': 'application/json' }
+  }).then(() => fetchData());
+}
+
+function exportExcel() {
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(dataSiswa);
+  XLSX.utils.book_append_sheet(wb, ws, "DataSiswa");
+  XLSX.writeFile(wb, "data_siswa.xlsx");
+}
+
+fetchData();
 </script>
 </body>
 </html>
